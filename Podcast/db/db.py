@@ -32,3 +32,11 @@ class MogodbManager:
     async def delete(self, collection_name, _id):
         result = self.database[collection_name].delete_one({"_id":ObjectId(_id)})
         return result.deleted_count
+async def sess_db():
+    podcast_db = MogodbManager("podcast_db")  
+    # podcast_db.database['podcast_collection'].drop_indexes()  
+    # podcast_db.database['episode_collection'].drop_indexes() 
+    # podcast_db.database['like_collection'].drop_indexes() 
+    podcast_db.database['podcast_collection'].create_index("id", unique=True) 
+    podcast_db.database['comment_collection'].create_index("id", unique=True) 
+    podcast_db.database['bookmark_collection'].create_index("id", unique=True)
