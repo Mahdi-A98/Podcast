@@ -76,3 +76,20 @@ async def podcast_episode_list(podcast_id:int, limit:int=1, offset:int=1):
     # episodes = await episode_collection.find(filter={"id": {"$in": episode_ids}}, projection={"_id": 0}).to_list(None)
     return JSONResponse({"podcast": podcast, "episodes": episodes}, status_code=status.HTTP_200_OK)
 
+
+@router.put("/like/{object_id}", response_description="Podcast and episode like endpoint")
+async def like(user_data: LoginDep, object_id:int, object_type:Literal['episode', 'podcast']): # depend on login
+    podcast_or_episode_collection = collections[f'{object_type}_collection']
+    like_collection = collections['like_collection']
+    try:
+        like = Like(**{"username": user_data['data'].get("username"), "object_id": object_id, "object_type": object_type})
+        like_result = await like_collection.insert_one(like.dict())
+        like_result = await podcast_or_episode_collection.find_one_and_update({"id": object_id}, {"$addToSet": {'likes': like.username}})
+    except ValidationError:
+        return JSONResponse({"message": "Wrong Like values"}, status_code=status.HTTP_400_BAD_REQUEST)
+    except DuplicateKeyError:
+        return JSONResponse({"message": f"this {object_type} is Liked before by this user"}, status_code=status.HTTP_400_BAD_REQUEST)
+    if not like_result:
+        return JSONResponse({"message": f"Wrong {object_type} id"}, status_code=status.HTTP_400_BAD_REQUEST)
+    return JSONResponse({"message":f"{object_type.capitalize()} {object_id} Liked successfully", object_type: str(like_result)}, status_code=status.HTTP_200_OK)
+
