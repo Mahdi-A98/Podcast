@@ -125,3 +125,16 @@ async def unlike(user_data: LoginDep, object_id:int, object_type:Literal['episod
     if not like_result:
         return JSONResponse({"message": f"Wrong {object_type} id"}, status_code=status.HTTP_200_OK)
     return JSONResponse({"message":f"{object_type.capitalize()} {object_id} UnLiked successfully", object_type: str(like_result)}, status_code=status.HTTP_200_OK)
+
+@router.put("/uncomment/{comment_id}", response_description="Uncomment Podcast or episode list")
+async def uncomment(user_data: LoginDep, comment_id:str): # depend on login
+    comment_collection = collections['comment_collection']
+    removed_comment = await comment_collection.find_one_and_delete({"id": comment_id})
+    if not removed_comment:
+        return JSONResponse({"message": "comment not found!"}, status_code=status.HTTP_404_NOT_FOUND)
+    podcast_or_episode_collection = collections[f'{removed_comment["object_type"]}_collection']
+    comment_result = await podcast_or_episode_collection.find_one_and_update({"id": removed_comment["object_id"]}, {"$pull": {'comments': comment_id}})
+    if not comment_result:
+        return JSONResponse({"message": f"Wrong {removed_comment['object_type']} id"}, status_code=status.HTTP_200_OK)
+    return JSONResponse({"message":f"{removed_comment['object_type'].capitalize()} {removed_comment['object_id']} Uncommentd successfully", removed_comment['object_type']: str(comment_result_result)}, status_code=status.HTTP_200_OK)
+
