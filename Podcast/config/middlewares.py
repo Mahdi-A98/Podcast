@@ -18,6 +18,16 @@ class InternalSecurityMiddleware(BaseHTTPMiddleware):
             return recieve_
 
         request._receive = recieve
+
+    async def encrypte_internal_response(self, request: Request, response: Response):
+        if internal_service:= SERVICE_CLASSES.get(request.headers.get("internal-service")):
+            resp_body = [section.decode() async for section in response.__dict__['body_iterator']]
+            resp_body = internal_service.Encrypt_tools.encrypt_data("\n".join(resp_body))
+            response.__setattr__('body_iterator', aiwrap([section.encode() for section in resp_body.split("\n")]))
+            response.headers['content-length'] = f"{len(resp_body)}"
+        return response
+
+
     async def dispatch(self, request, call_next):
         # decrypte body of internal services requests
         self.current_request = request
