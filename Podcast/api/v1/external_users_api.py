@@ -138,3 +138,37 @@ async def uncomment(user_data: LoginDep, comment_id:str): # depend on login
         return JSONResponse({"message": f"Wrong {removed_comment['object_type']} id"}, status_code=status.HTTP_200_OK)
     return JSONResponse({"message":f"{removed_comment['object_type'].capitalize()} {removed_comment['object_id']} Uncommentd successfully", removed_comment['object_type']: str(comment_result_result)}, status_code=status.HTTP_200_OK)
 
+
+@router.get("/test", response_description="test")
+async def test(): # depend on login
+    podcast_collection = collections['podcast_collection']
+    pipeline = [
+                    {"$lookup": 
+                        {
+                            "from": "comment_collection",
+                            "localField": "comments",
+                            "foreignField": "id",
+                            "as" : "comments",
+                            "pipeline":[
+                                {"$project":
+                                    {"_id":0,
+                                    "username":1,
+                                    "created_at": {
+                                        "$dateToString": {
+                                        "format": "%Y-%m-%d %H:%M:%S",
+                                        "date": "$created_at"
+                                        }},
+                                    "text":1,
+                                    }
+                                },
+                            ]
+
+                        }
+                    },
+                    {"$project":
+                        {
+                        "_id":0,
+                    }}
+                ]
+    result = await podcast_collection.aggregate(pipeline=pipeline).to_list(None)
+    return JSONResponse({"message":result}, status_code=status.HTTP_200_OK)
