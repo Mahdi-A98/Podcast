@@ -1,5 +1,4 @@
 venv
 .env
 Podcast/.env
-Podcast
 *.pyc
