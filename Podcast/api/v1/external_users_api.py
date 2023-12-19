@@ -93,3 +93,24 @@ async def like(user_data: LoginDep, object_id:int, object_type:Literal['episode'
         return JSONResponse({"message": f"Wrong {object_type} id"}, status_code=status.HTTP_400_BAD_REQUEST)
     return JSONResponse({"message":f"{object_type.capitalize()} {object_id} Liked successfully", object_type: str(like_result)}, status_code=status.HTTP_200_OK)
 
+
+
+@router.put("/comment/{object_id}", response_description="Podcast and episode like endpoint")
+async def comment(user_data: LoginDep, object_id:int, comment:BaseComment=Body(...)): # depend on login
+    podcast_or_episode_collection = collections[f'{comment.object_type}_collection']
+    comment_collection = collections['comment_collection']
+    comment_data = comment.dict()
+    comment_data["username"] = user_data['data'].get("username")
+    try:
+        print(f"{comment_data =} ")
+        comment = Comment(**comment_data)
+        comment_result = await comment_collection.insert_one(comment.dict())
+        podcast_comment_result = await podcast_or_episode_collection.find_one_and_update({"id": object_id}, {"$addToSet": {'comments': comment.id}})
+    except ValidationError as e:
+        return JSONResponse({"message": "Wrong comment values", "error": str(e) }, status_code=status.HTTP_400_BAD_REQUEST)
+    except DuplicateKeyError:
+        return JSONResponse({"message": f"this {object_type} is commented before by this user"}, status_code=status.HTTP_400_BAD_REQUEST)
+    if not podcast_comment_result:
+        return JSONResponse({"message": f"Wrong {object_type} id"}, status_code=status.HTTP_400_BAD_REQUEST)
+    return JSONResponse({"message":f"{comment.object_type.capitalize()} {object_id} commented successfully by {comment.username}", comment.object_type: str(podcast_comment_result)}, status_code=status.HTTP_200_OK)
+
