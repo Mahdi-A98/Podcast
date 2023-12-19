@@ -12,3 +12,12 @@ async def check_login_status(request: Request):
         raise HTTPException(detail=auth_response.json(), status_code=auth_response.status_code)
     print(f"check_login_status auth_response.json(): {auth_response.json()}")
     return auth_response.json()
+
+
+
+async def get_service(request: Request):
+    if not request.headers.get("internal-service"):
+        raise HTTPException(detail="Access denied.", status_code=403)
+    return True
+
+
