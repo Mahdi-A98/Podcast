@@ -1,5 +1,14 @@
+import pymongo
+import motor.motor_asyncio
+from bson.objectid import ObjectId
+
+from config import settings
+from typing import Dict
+
 databases : Dict[str, pymongo.database.Database] = {}
 collections : Dict[str, pymongo.collection.Collection] = {}
+
+
 class MogodbManager:
     HOST=settings.MONGODB_HOST
     PORT=settings.MONGODB_PORT
@@ -32,6 +41,8 @@ class MogodbManager:
     async def delete(self, collection_name, _id):
         result = self.database[collection_name].delete_one({"_id":ObjectId(_id)})
         return result.deleted_count
+
+
 async def sess_db():
     podcast_db = MogodbManager("podcast_db")  
     # podcast_db.database['podcast_collection'].drop_indexes()  
