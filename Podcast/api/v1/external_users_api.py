@@ -30,3 +30,21 @@ router = APIRouter(
     )
 
 
+@router.get("/podcast_list", response_description="Podcast list")
+async def podcast_list(limit:int=1, offset:int=1):
+    podcast_collection = collections['podcast_collection']
+    django_response = await DjangoPodcastService.get_podcast_list(params={"limit":limit, "offset":offset})
+    response_dict = django_response.json()
+    podcasts = PodcastCollection(podcasts=response_dict['results'])
+
+    query = {"id": {"$in": list(map(lambda pod_dict: pod_dict["id"], podcasts.dict()['podcasts']))}}
+    pipeline = RETRIVE_COMMENTS_PIPELINE
+    pipeline.append({"$match": query})
+    try:
+        result = await podcast_collection.insert_many(podcasts.dict()['podcasts'], ordered=False)
+    except BulkWriteError:
+        pass
+    results =  podcast_collection.aggregate(pipeline)
+    response_dict['results'] = await results.to_list(None)
+    paginated_podcasts = PaginatedPodcastCollection(**response_dict)
+    return JSONResponse(paginated_podcasts.dict(), status_code=status.HTTP_200_OK)
