@@ -1,3 +1,5 @@
+databases : Dict[str, pymongo.database.Database] = {}
+collections : Dict[str, pymongo.collection.Collection] = {}
 class MogodbManager:
     HOST=settings.MONGODB_HOST
     PORT=settings.MONGODB_PORT
