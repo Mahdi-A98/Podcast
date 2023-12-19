@@ -40,3 +40,17 @@ async def sess_db():
     podcast_db.database['podcast_collection'].create_index("id", unique=True) 
     podcast_db.database['comment_collection'].create_index("id", unique=True) 
     podcast_db.database['bookmark_collection'].create_index("id", unique=True)
+    podcast_db.database['like_collection'].create_index([
+        ("username", pymongo.ASCENDING),
+        ("object_type", pymongo.ASCENDING),
+        ("object_id", pymongo.ASCENDING)], unique=True) 
+    podcast_db.database['bookmark_collection'].create_index([
+        ("username", pymongo.ASCENDING),
+        ("object_type", pymongo.ASCENDING),
+        ("object_id", pymongo.ASCENDING)], unique=True)
+    podcast_db.database['comment_collection'].create_index([
+        ("username", pymongo.ASCENDING),
+        ("object_type", pymongo.ASCENDING),
+        ("object_id", pymongo.ASCENDING)]) 
+
+    return podcast_db
